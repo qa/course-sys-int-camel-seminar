@@ -57,18 +57,24 @@ public class AccountingRouteTest extends OrderProcessRouteTest {
     // 2 - shipment should receive no message - set asserts
     // 3 - send body and property (why / which exchange property?)
     // 4 - check order status
+    @Test
     public void testReservationFailed() throws Exception {
         accountingStatus = "INVALID";
 
         // TASK-7: set expected message count to shipment mock endpoint
         // TASK-7: send body and property (why / which exchange property?) with producer
+        shipment.expectedMessageCount(0);
+        producer.sendBodyAndProperty("-", "orderId", "1");
 
         // TASK-7: verify if mock asserts are satisfied
+        shipment.assertIsSatisfied();
         shipment.reset(); // reset mock endpoint, is used in more then one test method
 
         Order order = OrderRepository.get(1L);
         // TASK-5: check that order.status.resolution is 'CANCELLED'
         // TASK-5: check that order.status.description is 'Invalid accounting'
+        assertEquals("CANCELLED", order.getStatus().getResolution());
+        assertEquals("Invalid accounting", order.getStatus().getDescription());
     }
 
     @Override

@@ -7,6 +7,7 @@ import org.apache.camel.model.dataformat.JaxbDataFormat;
 import org.apache.camel.model.dataformat.JsonLibrary;
 import org.apache.camel.model.rest.RestBindingMode;
 
+import com.redhat.brq.integration.camel.exception.InvalidAccountingException;
 import com.redhat.brq.integration.camel.exception.ItemNotReservedException;
 import com.redhat.brq.integration.camel.exception.ShipmentFailedException;
 import com.redhat.brq.integration.camel.model.Order;
@@ -165,6 +166,11 @@ public class OrderProcessRoute extends RouteBuilder {
         //   - see hints in the test class
         // 5 - check your updates and your test
         from("direct:accounting").id("accounting")
+            .onException(InvalidAccountingException.class).handled(true)
+                .log("Invalid accounting for order ${property.orderId}")
+                .bean(OrderStatusProvider.class, "accountingInvalid")
+            .end()
+
             .bean(OrderRepository.class, "get")
             .marshal().json(JsonLibrary.Jackson)
             .removeHeaders("*")
