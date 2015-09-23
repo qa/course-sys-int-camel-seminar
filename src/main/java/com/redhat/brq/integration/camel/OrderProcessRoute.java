@@ -200,9 +200,15 @@ public class OrderProcessRoute extends RouteBuilder {
         //   - you need to propagate orderId to the endpoint
         //   - HINT: only headers are propagated, exchange properties not, so...
         // 5 - you can test your route by ShipmentRouteTest
-        JaxbDataFormat jaxb;
+        JaxbDataFormat jaxb = new JaxbDataFormat(true);
+        jaxb.setContextPath("com.redhat.brq.integration.camel.model");
+
         from("direct:shipment").id("shipment")
-            .log("TASK-8::shipment route logic: ${body}");
+            .bean(OrderRepository.class, "get")
+            .transform().simple("${body.address}")
+            .marshal(jaxb)
+            .setHeader("orderId", simple("${property.orderId}"))
+            .to("activemq:queue:SHPMNT.REQ");
 
 
         // TASK-9
