@@ -6,6 +6,7 @@ import org.apache.camel.model.dataformat.BindyType;
 import org.apache.camel.model.dataformat.JaxbDataFormat;
 import org.apache.camel.model.rest.RestBindingMode;
 
+import com.redhat.brq.integration.camel.exception.ItemNotReservedException;
 import com.redhat.brq.integration.camel.exception.ShipmentFailedException;
 import com.redhat.brq.integration.camel.model.Order;
 import com.redhat.brq.integration.camel.model.OrderItem;
@@ -117,8 +118,14 @@ public class OrderProcessRoute extends RouteBuilder {
         // 4 - finish test for the error state in ReceiveInventoryRouteTest class
         //   - see the hints in the test class
         // 5 - check your updates and your test
-        from("file://INVALID_PATH").id("receive-inventory")
-            .log("TASK-4::receive-inventory route logic: ${body}");
+        from("file://{{endpoint.file.baseUrl}}/outbox/inventory").id("receive-inventory")
+            .setProperty("orderId", simple("${header.CamelFileName}"))
+            .split(body().tokenize("\n")).streaming().stopOnException()
+                .choice()
+                    .when(body().contains(";0;")).throwException(new ItemNotReservedException())
+                .end()
+            .end()
+            .to("direct:accounting");
 
 
         // TASK-6
