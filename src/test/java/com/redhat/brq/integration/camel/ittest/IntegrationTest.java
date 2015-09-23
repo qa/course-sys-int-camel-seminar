@@ -9,6 +9,7 @@ import javax.inject.Inject;
 
 import org.apache.camel.CamelContext;
 import org.apache.camel.EndpointInject;
+import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.mock.MockEndpoint;
@@ -16,8 +17,10 @@ import org.apache.camel.model.ModelCamelContext;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.karaf.options.KarafDistributionBaseConfigurationOption;
 import org.ops4j.pax.exam.karaf.options.KarafDistributionKitConfigurationOption;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
@@ -40,6 +43,7 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.replaceCo
 // TASK-10
 // Finish integration test.
 // Add @RunWith PaxExam class to run test inside JBoss Fuse with PaxExam
+@RunWith(PaxExam.class) // Run test inside jboss-fuse with PaxExam
 @ExamReactorStrategy(PerClass.class) // Alternatively PerMethod (Fuse started / stopped for each test method)
 public class IntegrationTest extends CamelTestSupport {
 
@@ -173,8 +177,11 @@ public class IntegrationTest extends CamelTestSupport {
         response.expectedMessageCount(1);
         // TASK-10: HTTP response code 201 is expected
         // TASK-10: Location header is expected to be '/orders/1'
+        response.expectedHeaderReceived(Exchange.HTTP_RESPONSE_CODE, 201);
+        response.expectedHeaderReceived("Location", "/orders/1");
 
         // TASK-10: send body - use createOrder() method to create body
+        producer.sendBody(createOrder());
 
         Thread.sleep(TimeUnit.SECONDS.toMillis(20)); // wait for process
 
