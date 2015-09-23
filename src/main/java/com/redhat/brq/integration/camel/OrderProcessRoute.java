@@ -1,11 +1,13 @@
 package com.redhat.brq.integration.camel;
 
+import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.dataformat.JaxbDataFormat;
 import org.apache.camel.model.rest.RestBindingMode;
 
 import com.redhat.brq.integration.camel.exception.ShipmentFailedException;
 import com.redhat.brq.integration.camel.model.Order;
+import com.redhat.brq.integration.camel.service.OrderRepository;
 import com.redhat.brq.integration.camel.service.OrderStatusProvider;
 
 public class OrderProcessRoute extends RouteBuilder {
@@ -39,7 +41,11 @@ public class OrderProcessRoute extends RouteBuilder {
         // 5 - you can test your route by HTTP POST request with valid body
         // 6 - route message to issue-order route
         from("direct:new-order").id("new-order")
-            .log("TASK-1::new-order route logic: ${body}");
+            .bean(OrderRepository.class, "create")
+            .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(201))
+            .setHeader("Location", simple("/orders/${body.id}"))
+            .to("direct:issue-order")
+            .setBody(constant(null)); // return empty body for 201 Created response;
 
 
         // TASK-2
