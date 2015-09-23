@@ -119,6 +119,11 @@ public class OrderProcessRoute extends RouteBuilder {
         //   - see the hints in the test class
         // 5 - check your updates and your test
         from("file://{{endpoint.file.baseUrl}}/outbox/inventory").id("receive-inventory")
+            .onException(ItemNotReservedException.class).handled(true)
+                .log("Items for order::${header.CamelFileName} cannot be reserved")
+                .bean(OrderStatusProvider.class, "reservationNotPossible")
+            .end()
+
             .setProperty("orderId", simple("${header.CamelFileName}"))
             .split(body().tokenize("\n")).streaming().stopOnException()
                 .choice()

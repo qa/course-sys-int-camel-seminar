@@ -61,8 +61,10 @@ public class ReceiveInventoryRouteTest extends OrderProcessRouteTest {
     //   - do not forget to set file name to '1'
     // 3 - assert status of order with id 1
     // 4 - check that file was consumed
+    @Test
     public void testReservationFailed() throws Exception {
         // TASK-5: send body and header with the producer
+        producer.sendBodyAndHeader("1;2;0\n2;0;1\n", "CamelFileName", "1");
 
         // wait a while to let the file be consumed
         Thread.sleep(2000);
@@ -70,9 +72,12 @@ public class ReceiveInventoryRouteTest extends OrderProcessRouteTest {
         Order order = OrderRepository.get(1L);
         // TASK-5: check that order.status.resolution is 'CANCELLED'
         // TASK-5: check that order.status.description is 'Not enough items in an inventory'
+        assertEquals("CANCELLED", order.getStatus().getResolution());
+        assertEquals("Not enough items in an inventory", order.getStatus().getDescription());
 
         File target = new File("outbox/inventory/1");
         // TASK-5: check that file does not exists
+        assertTrue("Inventory file should have been consumed", !target.exists());
     }
 
     @Override
