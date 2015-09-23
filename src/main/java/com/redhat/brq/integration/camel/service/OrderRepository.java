@@ -3,6 +3,8 @@ package com.redhat.brq.integration.camel.service;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.camel.ExchangeProperty;
+
 import com.redhat.brq.integration.camel.model.Order;
 
 public final class OrderRepository {
@@ -17,7 +19,7 @@ public final class OrderRepository {
 
     // TASK-2
     // 1 - map long id to property.orderId of camel exchange
-    public static Order get(long id) {
+    public static Order get(@ExchangeProperty("orderId") long id) {
         return ORDERS.get(id);
     }
 

@@ -59,7 +59,11 @@ public class OrderProcessRoute extends RouteBuilder {
         // 4 - if retrieved Order is null, return HTTP response 404
         // 5 - you can test your route by HTTP GET request
         from("direct:find-order").id("find-order")
-            .log("TASK-2::find-order route logic: ${body}");
+            .setProperty("orderId", simple("${header.orderId}"))
+            .bean(OrderRepository.class, "get")
+            .choice()
+            .when(body().isNull()).setHeader(Exchange.HTTP_RESPONSE_CODE, constant(404))
+            .end();
 
 
         // TASK-3
