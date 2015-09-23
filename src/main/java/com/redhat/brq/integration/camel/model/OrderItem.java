@@ -1,15 +1,21 @@
 package com.redhat.brq.integration.camel.model;
 
+import org.apache.camel.dataformat.bindy.annotation.CsvRecord;
+import org.apache.camel.dataformat.bindy.annotation.DataField;
+
 // TASK-3
 // Mark the class as csv record, use ';' as separator and crlf set to 'UNIX'
+@CsvRecord(separator = ";", crlf = "UNIX")
 public class OrderItem {
 
     // TASK-3
     // Mark this attribute as CSV field, do not forget to set correct position (pos)
+    @DataField(pos = 1)
     private long articleId;
 
     // TASK-3
     // Mark this attribute as CSV field, do not forget to set correct position (pos)
+    @DataField(pos = 2)
     private int count;
 
     private double unitPrice;

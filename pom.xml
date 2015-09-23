@@ -55,6 +55,10 @@
         <!-- Add dependency for camel-bindy -->
         <dependency>
             <groupId>org.apache.camel</groupId>
+            <artifactId>camel-bindy</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
             <artifactId>camel-groovy</artifactId>
         </dependency>
         <dependency>

@@ -2,11 +2,13 @@ package com.redhat.brq.integration.camel;
 
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.model.dataformat.BindyType;
 import org.apache.camel.model.dataformat.JaxbDataFormat;
 import org.apache.camel.model.rest.RestBindingMode;
 
 import com.redhat.brq.integration.camel.exception.ShipmentFailedException;
 import com.redhat.brq.integration.camel.model.Order;
+import com.redhat.brq.integration.camel.model.OrderItem;
 import com.redhat.brq.integration.camel.service.OrderRepository;
 import com.redhat.brq.integration.camel.service.OrderStatusProvider;
 
@@ -44,7 +46,7 @@ public class OrderProcessRoute extends RouteBuilder {
             .bean(OrderRepository.class, "create")
             .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(201))
             .setHeader("Location", simple("/orders/${body.id}"))
-            .to("direct:issue-order")
+            .to("seda:issue-order") // return immediately
             .setBody(constant(null)); // return empty body for 201 Created response;
 
 
@@ -84,8 +86,13 @@ public class OrderProcessRoute extends RouteBuilder {
         //     - see setting of ${endpoint.file.baseUrl} in maven properties and camel maven plugin
         //   - you have to set the name of the file to orderId, see properties of file endpoint of camel
         // 7 - you can test the route by IssueOrderRouteTest, the test should pass if your route is correct
-        from("direct:issue-order").id("issue-order")
-            .log("TASK-3::issue-order route logic: ${body}");
+        from("seda:issue-order").id("issue-order")
+            .setProperty("orderId", simple("${body.id}"))
+            .bean(OrderStatusProvider.class, "inProcess")
+            .log("Issuing new order: ${body}")
+            .transform().simple("${body.items}")
+            .marshal().bindy(BindyType.Csv, OrderItem.class)
+            .to("file://{{endpoint.file.baseUrl}}/inbox/inventory?fileName=${property.orderId}");
 
 
         // TASK-4
