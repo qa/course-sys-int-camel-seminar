@@ -4,6 +4,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.dataformat.BindyType;
 import org.apache.camel.model.dataformat.JaxbDataFormat;
+import org.apache.camel.model.dataformat.JsonLibrary;
 import org.apache.camel.model.rest.RestBindingMode;
 
 import com.redhat.brq.integration.camel.exception.ItemNotReservedException;
@@ -164,7 +165,15 @@ public class OrderProcessRoute extends RouteBuilder {
         //   - see hints in the test class
         // 5 - check your updates and your test
         from("direct:accounting").id("accounting")
-            .log("TASK-6::accounting route logic: ${body}");
+            .bean(OrderRepository.class, "get")
+            .marshal().json(JsonLibrary.Jackson)
+            .removeHeaders("*")
+            .setHeader(Exchange.HTTP_METHOD, constant(org.apache.camel.component.http4.HttpMethods.POST))
+            .to("https4://localhost:7070/accounting?authMethod=Basic&authenticationPreemptive=true&authUsername=admin&authPassword=foo&sslContextParameters=#sslContextParameters")
+            .convertBodyTo(String.class)
+            .log("Received Accounting response: ${body}")
+            .process(new AccountingResponseProcessor())
+            .to("direct:shipment");
 
 
         // TASK-8
